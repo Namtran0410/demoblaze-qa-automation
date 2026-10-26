@@ -1,5 +1,5 @@
 import { Locator, expect } from "@playwright/test";
-import BasePage from "@infras/00.pages/01.base.page";
+import {BasePage} from "@infras/00.pages/01.base.page";
 
 export class MainPage extends BasePage {
     // Task bar
@@ -49,19 +49,12 @@ export class MainPage extends BasePage {
         return this.pagination.getByRole("button", { name: "Previous" })
     }
 
+    // Categories: the category links are in the footer, so scope to the footer
     category(name: "Phones" | "Laptops" | "Monitors"): Locator {
         return this.page.getByRole("link", { name, exact: true })
     }
 
     product(name: string): Locator {
         return this.productList.getByRole("link", { name, exact: true })
-    }
-
-    // Products load from the API after the page opens, so wait for the first one
-    async goto() {
-        await this.page.goto("/")
-        await expect(this.page).toHaveTitle("STORE")
-        await expect(this.taskBarLogo).toBeVisible()
-        await expect(this.productTitles.first()).toBeVisible()
     }
 }

@@ -1,8 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import { env } from './03.config/env';
 
+// API tests are marked by the *.api.spec.ts suffix, so every other spec under 02.test runs in the browsers.
 // A project-level testIgnore replaces the top-level one, so perf is listed again
-const uiTestIgnore = ['00.integration/**', '02.perf/**'];
+const apiTestMatch = '**/*.api.spec.ts';
+const uiTestIgnore = [apiTestMatch, '02.perf/**'];
 
 // Workers reload this config without the CLI args, so pass the headed flag on through an env var they inherit
 if (process.argv.includes('--headed')) process.env.PW_HEADED = '1';
@@ -17,6 +19,16 @@ const chromiumUse = isHeaded
       launchOptions: { args: ['--start-maximized'] },
     }
   : devices['Desktop Chrome'];
+
+// Firefox ignores --start-maximized and -width/-height, so headed runs use kiosk mode (fullscreen, no toolbar)
+const firefoxUse = isHeaded
+  ? {
+      ...devices['Desktop Firefox'],
+      viewport: null,
+      deviceScaleFactor: undefined, // not allowed together with a null viewport
+      launchOptions: { args: ['--kiosk'] },
+    }
+  : devices['Desktop Firefox'];
 
 export default defineConfig({
   testDir: './02.test',
@@ -36,9 +48,9 @@ export default defineConfig({
 
   use: {
     baseURL: env.baseUrl,
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    trace: 'on',
+    screenshot: 'on',
+    video: 'on',
     actionTimeout: 10_000,
     navigationTimeout: 30_000,
   },
@@ -46,10 +58,10 @@ export default defineConfig({
   projects: [
     {
       name: 'api',
-      testDir: './02.test/00.integration',
+      testMatch: apiTestMatch,
       use: { baseURL: env.apiUrl },
     },
-    // UI projects pick up every spec under 02.test except API and perf tests
+    // UI projects pick up every spec under 02.test except *.api.spec.ts and perf tests
     {
       name: 'chromium',
       testIgnore: uiTestIgnore,
@@ -58,7 +70,7 @@ export default defineConfig({
     {
       name: 'firefox',
       testIgnore: uiTestIgnore,
-      use: { ...devices['Desktop Firefox'] },
+      use: firefoxUse,
     },
     {
       name: 'webkit',

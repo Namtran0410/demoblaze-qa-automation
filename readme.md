@@ -1,78 +1,118 @@
 # demoblaze-qa-automation
 
-Bộ test tự động cho [demoblaze.com](https://www.demoblaze.com), viết bằng Playwright + TypeScript.
+Automated tests for [demoblaze.com](https://www.demoblaze.com), written with Playwright and TypeScript.
 
-## Yêu cầu
+## Requirements
 
-- Node.js 20 trở lên (đang dùng Node 24)
-- npm
+- [Node.js](https://nodejs.org/) 20 or later (the project is developed on Node 24)
+- npm (installed with Node.js)
+- Git
 
-## Cài đặt
+Check your versions:
 
 ```bash
-# 1. Cài dependencies
-npm install
+node -v
+npm -v
+git --version
+```
 
-# 2. Tải browser cho Playwright (Chromium, Firefox, WebKit)
+## Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Namtran0410/demoblaze-qa-automation.git
+cd demoblaze-qa-automation
+
+# 2. Install dependencies (use `npm install` if package-lock.json is missing)
+npm ci
+
+# 3. Download the Playwright browsers (Chromium, Firefox, WebKit)
 npx playwright install
 
-# 3. Linux: cài thư viện hệ thống mà browser cần (cần sudo, bắt buộc với WebKit)
+# 4. Linux only: install the system libraries the browsers need (requires sudo, WebKit will not start without them)
 sudo npx playwright install-deps
 
-# 4. Tạo file biến môi trường
-cp .env.example .env
+# 5. Create the environment file
+cp .env.example .env          # macOS / Linux
+copy .env.example .env        # Windows (cmd)
 ```
 
-## Biến môi trường
+Steps 3 and 4 can be combined into one command: `npx playwright install --with-deps`.
 
-Khai báo trong file `.env`. Biến nào không khai báo thì dùng giá trị mặc định.
+Then open `.env` and fill in `TEST_USERNAME` and `TEST_PASSWORD` with a demoblaze account (create one with **Sign up** on [demoblaze.com](https://www.demoblaze.com)). The Login and Cart tests need this account.
 
-| Biến       | Mặc định                     | Dùng cho                              |
-| ---------- | ---------------------------- | ------------------------------------- |
-| `BASE_URL` | `https://www.demoblaze.com`  | Test UI (project chromium/firefox/webkit) |
-| `API_URL`  | `https://api.demoblaze.com`  | Test API (project `api`)              |
-| `TEST_USERNAME` | _(trống)_              | Tài khoản demoblaze dùng cho test Login/Cart |
-| `TEST_PASSWORD` | _(trống)_              | Mật khẩu của tài khoản trên           |
-| `CI`       | _(không đặt)_                | Bật retry 2 lần, chặn `test.only`     |
-
-## Chạy test
-
-| Lệnh                     | Tác dụng                                  |
-| ------------------------ | ----------------------------------------- |
-| `npm test`               | Chạy tất cả project                       |
-| `npm run test:api`       | Chỉ chạy test API (`02.test/00.integration`) |
-| `npm run test:e2e`       | Chạy test UI trên cả 3 browser (mọi file trong `02.test`, trừ `00.integration` và `02.perf`) |
-| `npm run test:chromium`  | Chạy test UI chỉ trên Chromium            |
-| `npm run test:headed`    | Chạy trên Chromium, có mở cửa sổ browser  |
-| `npm run test:ui`        | Mở Playwright UI mode để chạy và debug    |
-| `npm run report`         | Mở HTML report của lần chạy gần nhất      |
-| `npm run typecheck`      | Kiểm tra lỗi TypeScript                   |
-
-Chạy riêng một file hoặc một test:
+Check that everything works:
 
 ```bash
-npx playwright test 02.test/01.e2e/login.spec.ts
-npx playwright test -g "tên test"
+npm run typecheck
+npm run test:chromium
 ```
 
-Khi test lỗi, trace, screenshot và video được lưu trong `test-results/`. Xem trace bằng `npx playwright show-trace <đường dẫn trace.zip>`.
+## Environment variables
 
-## Cấu trúc thư mục
+Variables are read from `.env`. Any variable that is not set falls back to its default.
+
+| Variable        | Default                     | Used for                                       |
+| --------------- | --------------------------- | ---------------------------------------------- |
+| `BASE_URL`      | `https://www.demoblaze.com` | UI tests (projects chromium/firefox/webkit)    |
+| `API_URL`       | `https://api.demoblaze.com` | API tests (project `api`)                      |
+| `TEST_USERNAME` | _(empty)_                   | demoblaze account used by Login/Cart tests     |
+| `TEST_PASSWORD` | _(empty)_                   | Password of that account                       |
+| `CI`            | _(not set)_                 | Retries failed tests twice, blocks `test.only` |
+
+## Running tests
+
+| Command                 | What it does                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm test`              | Runs every project                                                                              |
+| `npm run test:api`      | Runs only API tests (`*.api.spec.ts` files)                                                     |
+| `npm run test:e2e`      | Runs UI tests on all 3 browsers (every file in `02.test` except `*.api.spec.ts` and `02.perf`) |
+| `npm run test:chromium` | Runs UI tests on Chromium only                                                                  |
+| `npm run test:headed`   | Runs on Chromium with a visible browser window                                                  |
+| `npm run test:ui`       | Opens Playwright UI mode to run and debug tests                                                 |
+| `npm run report`        | Opens the HTML report of the last run                                                           |
+| `npm run typecheck`     | Checks for TypeScript errors                                                                    |
+
+Run a single file, a single test, or a single browser:
+
+```bash
+npx playwright test 02.test/01.e2e/01.login/01.authentication.spec.ts
+npx playwright test -g "LG-002"
+npm test -- --grep "SMK-001" --project=firefox
+```
+
+Test titles start with the test case ID from `00.test_case/` (for example `LG-002 | Login with valid credentials`), so `-g "<ID>"` runs one case.
+
+Every test saves a trace in `test-results/`, whether it passes or fails. When a test fails, a screenshot and video are saved there too. Open a trace with:
+
+```bash
+npx playwright show-trace <path to trace.zip>
+```
+
+## Project structure
 
 ```
-00.test_case/          Tài liệu test case
+00.test_case/          Test case suite (Excel: Summary, Login, Cart, Order sheets)
 01.src/
-  00.infras/           Lớp nền: base page, API client
-  01.business/         Page object và luồng nghiệp vụ
-  02.fixture/          Playwright fixtures
-  03.data/             Dữ liệu test
-  04.utils/            Hàm tiện ích
+  00.infras/
+    00.pages/          Page objects (00.index.page.ts groups every page)
+    01.helpers/        Reusable test steps built on the page objects
+  01.business/         Business flows
+  02.fixture/          Playwright fixtures (00.index.fixture.ts merges all of them)
+  03.data/             Test data
+  04.utils/            Utility functions
 02.test/
-  00.integration/      Test API (project `api`)
-  01.e2e/              Test UI (project chromium/firefox/webkit quét cả `02.test/`, trừ `00.integration/` và `02.perf/`)
-  02.perf/             Test hiệu năng (Playwright không chạy thư mục này)
-03.config/             Cấu hình môi trường (env.ts)
-playwright.config.ts   Cấu hình Playwright
+  00.integration/      Integration tests (`*.api.spec.ts` files run in the `api` project, the rest run in the browsers)
+  01.e2e/              UI tests, one folder per feature (01.login, 02.cart, 03.order)
+  02.perf/             Performance tests (Playwright does not run this folder)
+03.config/             Environment configuration (env.ts)
+playwright.config.ts   Playwright configuration
 ```
 
-Có thể import theo alias thay cho đường dẫn tương đối: `@config/*`, `@infras/*`, `@business/*`, `@fixture/*`, `@data/*`, `@utils/*` (khai báo trong `tsconfig.json`).
+Tests import `test` and `expect` from the merged fixture instead of `@playwright/test`:
+
+```ts
+import { test, expect } from "@fixture/00.index.fixture"
+```
+
+Path aliases can be used instead of relative paths: `@config/*`, `@infras/*`, `@business/*`, `@fixture/*`, `@data/*`, `@utils/*` (declared in `tsconfig.json`).

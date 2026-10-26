@@ -1,0 +1,28 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Test reports / artifacts
+reports/
+allure-results/
+allure-report/
+test-results/
+playwright-report/
+screenshots/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store

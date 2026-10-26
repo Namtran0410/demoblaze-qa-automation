@@ -31,6 +31,8 @@ Khai báo trong file `.env`. Biến nào không khai báo thì dùng giá trị 
 | ---------- | ---------------------------- | ------------------------------------- |
 | `BASE_URL` | `https://www.demoblaze.com`  | Test UI (project chromium/firefox/webkit) |
 | `API_URL`  | `https://api.demoblaze.com`  | Test API (project `api`)              |
+| `TEST_USERNAME` | _(trống)_              | Tài khoản demoblaze dùng cho test Login/Cart |
+| `TEST_PASSWORD` | _(trống)_              | Mật khẩu của tài khoản trên           |
 | `CI`       | _(không đặt)_                | Bật retry 2 lần, chặn `test.only`     |
 
 ## Chạy test
@@ -39,7 +41,7 @@ Khai báo trong file `.env`. Biến nào không khai báo thì dùng giá trị 
 | ------------------------ | ----------------------------------------- |
 | `npm test`               | Chạy tất cả project                       |
 | `npm run test:api`       | Chỉ chạy test API (`02.test/00.integration`) |
-| `npm run test:e2e`       | Chạy test UI trên cả 3 browser (`02.test/01.e2e`) |
+| `npm run test:e2e`       | Chạy test UI trên cả 3 browser (mọi file trong `02.test`, trừ `00.integration` và `02.perf`) |
 | `npm run test:chromium`  | Chạy test UI chỉ trên Chromium            |
 | `npm run test:headed`    | Chạy trên Chromium, có mở cửa sổ browser  |
 | `npm run test:ui`        | Mở Playwright UI mode để chạy và debug    |
@@ -67,7 +69,7 @@ Khi test lỗi, trace, screenshot và video được lưu trong `test-results/`.
   04.utils/            Hàm tiện ích
 02.test/
   00.integration/      Test API (project `api`)
-  01.e2e/              Test UI (project chromium/firefox/webkit)
+  01.e2e/              Test UI (project chromium/firefox/webkit quét cả `02.test/`, trừ `00.integration/` và `02.perf/`)
   02.perf/             Test hiệu năng (Playwright không chạy thư mục này)
 03.config/             Cấu hình môi trường (env.ts)
 playwright.config.ts   Cấu hình Playwright

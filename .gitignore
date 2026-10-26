@@ -26,3 +26,6 @@ screenshots/
 .idea/
 .vscode/
 .DS_Store
+
+# Office lock files (created while a document is open)
+~$*

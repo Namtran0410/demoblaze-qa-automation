@@ -4,6 +4,7 @@ import { ApiAccountCreator } from "@business/01.account/01.api.account.creator";
 import { UIAccountCreator } from "@business/01.account/02.ui.account.creator";
 import IndexPage from "@infras/00.pages/00.index.page";
 import UserGeneration from "@data/01.user.generation";
+import { IndexBusiness } from "@business/00.index.business";
 
 type AccountFixtures = {
     // Which strategy creates accounts; switch per file with test.use({ accountCreation: "ui" })

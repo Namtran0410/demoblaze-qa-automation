@@ -25,6 +25,15 @@ export class MainHelpers extends BasePage {
             await expect(element).toBeVisible()
         }
     }
+
+    /* Open the first product's detail page */
+    async clickOnFirstProduct() {
+        await this.main.productLinks.first().click()
+        await expect(this.page).toHaveURL(/prod\.html\?idp_=/)
+    }
+    async goToNav(barName: "Home (current)" | "Contact"| "About us" | "Cart" | "Log out") {
+        (await this.main.getNavBar(barName)).click()
+    }
 }
 
 export default MainHelpers

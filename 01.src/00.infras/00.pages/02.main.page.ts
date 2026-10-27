@@ -3,6 +3,9 @@ import {BasePage} from "@infras/00.pages/01.base.page";
 
 export class MainPage extends BasePage {
     // Task bar
+    async getNavBar(barName: "Home (current)" | "Contact"| "About us" | "Cart" | "Log out" ){
+        return this.page.getByRole("link", { name: barName, exact: true })
+    }
     get taskBarLogo() {
         return this.page.getByRole("link", { name: "PRODUCT STORE" })
     }
@@ -12,6 +15,7 @@ export class MainPage extends BasePage {
     get taskBarContact() {
         return this.page.getByRole("link", { name: "Contact", exact: true })
     }
+
     get taskBarAboutUs() {
         return this.page.getByRole("link", { name: "About us", exact: true })
     }
@@ -37,6 +41,10 @@ export class MainPage extends BasePage {
     }
     get productTitles() {
         return this.productList.getByRole("heading", { level: 4 })
+    }
+    // Each title wraps a link to prod.html?idp_=<id>
+    get productLinks() {
+        return this.productTitles.getByRole("link")
     }
     // The carousel also has Previous/Next buttons, so scope to the list that holds the paging buttons
     get pagination() {

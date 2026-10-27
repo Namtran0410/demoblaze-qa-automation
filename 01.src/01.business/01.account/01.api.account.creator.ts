@@ -9,7 +9,10 @@ export class ApiAccountCreator implements AccountCreator {
             `${env.apiUrl}/signup`,
             {
                 // The site sends the password base64-encoded, so do the same or UI login will fail
-                data: {username: account.username, password: Buffer.from(account.password).toString("base64")}
+                data: {
+                    username: account.username, 
+                    password: Buffer.from(account.password).toString("base64")
+                }
             }
         )
         expect(response.ok()).toBeTruthy()

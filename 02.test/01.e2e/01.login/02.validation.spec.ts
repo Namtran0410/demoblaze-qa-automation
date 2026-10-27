@@ -38,4 +38,27 @@ test.describe("Login | Login modal", ()=>{
         }, "empty")
     })
     //TODO: PASSED
+    test("LG-016 | Whitespace-only username and password", async({
+        authFixture,
+    })=> {
+        await authFixture.navigateToLoginSection()
+        await authFixture.loginFailure({
+            username: "        ",
+            password: "        "
+        }, "empty")
+    })
+    //TODO: FAILED
+    test("LG-021 | Very long username (2000 characters)", async({
+        authFixture, userData, accountCreator, accountCreation
+    })=> {
+        accountCreation = "api"
+        await authFixture.navigateToLoginSection()
+        const account = {
+            username: userData.generateUserName(2000),
+            password: userData.generatePassword()
+        }
+        await accountCreator.create(account).catch(f=> expect(f).toBeFalsy)
+        await authFixture.loginFailure(account, "userNotExist")
+    })
+    //TODO: FAILED
 })

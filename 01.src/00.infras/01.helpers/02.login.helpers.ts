@@ -55,11 +55,13 @@ export class AuthHelpers extends BasePage {
         await expect(this.pages.main.taskBarLogin).toBeHidden()
         await expect(this.pages.main.taskBarSignup).toBeHidden()
     }
-    async loginFailure(account: Account, type: "userNotExist" | "wrongPassword" | "empty" = "userNotExist") {
-        const expectedMessage = {
-            userNotExist: "User does not exist.",
-            wrongPassword: "Wrong password.",
-            empty: "Please fill out Username and Password.",
+    // "anyError" accepts either server error: on the public site, odd usernames may already be registered by someone
+    async loginFailure(account: Account, type: "userNotExist" | "wrongPassword" | "empty" | "anyError" = "userNotExist") {
+        const expectedMessages = {
+            userNotExist: ["User does not exist."],
+            wrongPassword: ["Wrong password."],
+            empty: ["Please fill out Username and Password."],
+            anyError: ["User does not exist.", "Wrong password."],
         }[type]
 
         await this.loginFillUsername(account.username)
@@ -76,7 +78,7 @@ export class AuthHelpers extends BasePage {
         await clickPromise
 
         expect(dialogType).toBe("alert")
-        expect(dialogMessage).toEqual(expectedMessage)
+        expect(expectedMessages).toContain(dialogMessage)
     }
     async closeModal(){
         await this.pages.auth.loginCloseButton.click()

@@ -16,17 +16,18 @@ export class ApiAuth {
     constructor(private readonly request: APIRequestContext){}
     async login(account: Account, expected: typeof LoginError[keyof typeof LoginError] ) {
         const response = await this.request.post(
-            process.env.BASE_URL as string,
+            `${process.env.API_URL}/login`,
         {
             data: {
-                data: {
-                    username: account.username, 
-                    password: Buffer.from(account.password).toString("base64")}
+                username: account.username, 
+                password: Buffer.from(account.password).toString("base64")
             }
         }
         )
+        console.log(response.status())
+        console.log(await response.json())
         expect(response.status()).toEqual(expected.status)
-        expect(response.json()).toEqual({errorMessage: expected.errorMessage})
+        expect(await response.json()).toEqual({errorMessage: expected.errorMessage})
     }
 }
 

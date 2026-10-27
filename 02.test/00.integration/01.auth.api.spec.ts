@@ -1,19 +1,15 @@
+import { LoginError } from "@business/02.auth/00.api.auth"
 import {test, expect} from "@fixture/00.index.fixture"
 
 test.describe("Login | Login modal", ()=>{
 
     test("LG-013 | API | Login with wrong password", async({
-        accountCreator, authFixture, userData
+        authApi, account
     })=> {
-        const account = await accountCreator.create({
-            username: userData.generateUserName(),
-            password: userData.generatePassword()  
-        })
-        await authFixture.navigateToLoginSection()
-        await authFixture.loginFailure({
+        await authApi.login({
             username: account.username,
-            password: userData.generatePassword()
-        }, "wrongPassword")
+            password: account.password + "aaa"
+        }, LoginError.wrongPassword)
     })
     //TODO: PASSED
 })

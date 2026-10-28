@@ -13,10 +13,10 @@ test.describe("Login | Login modal", ()=>{
     })
     //TODO: PASSED
     test("LG-014 | API | Login with non-existent username", async({
-        authApi, account, userData
+        authApi, account, userDataFixture
     })=> {
         await authApi.loginFailure({
-            username: userData.generateUserName(),
+            username: userDataFixture.generateUserName(),
             password: account.password
         }, LoginError.userNotExist)
     })

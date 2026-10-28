@@ -7,33 +7,33 @@ test.describe("Login | Login modal", ()=>{
     
     test("LG-010 | Login with incorrect username and incorrect password", async({
         authFixture, 
-        userData
+        userDataFixture
     })=> {
         await authFixture.navigateToLoginSection()
         await authFixture.loginFailure({
-            username: userData.generateUserName(),
-            password: userData.generatePassword()
+            username: userDataFixture.generateUserName(),
+            password: userDataFixture.generatePassword()
         })
     })
     //TODO: PASSED
     test("LG-011 | Login with empty username", async({
         authFixture,
-        userData
+        userDataFixture
     })=> {
         await authFixture.navigateToLoginSection()
         await authFixture.loginFailure({
             username: "",
-            password: userData.generatePassword()
+            password: userDataFixture.generatePassword()
         }, "empty")
     })
     //TODO: PASSED
     test("LG-012 | Login with empty password", async({
         authFixture,
-        userData
+        userDataFixture
     })=> {
         await authFixture.navigateToLoginSection()
         await authFixture.loginFailure({
-            username: userData.generateUserName(),
+            username: userDataFixture.generateUserName(),
             password: ""
         }, "empty")
     })
@@ -49,13 +49,13 @@ test.describe("Login | Login modal", ()=>{
     })
     //TODO: FAILED
     test("LG-021 | Very long username (2000 characters)", async({
-        authFixture, userData, accountCreator, accountCreation
+        authFixture, userDataFixture, accountCreator, accountCreation
     })=> {
         accountCreation = "api"
         await authFixture.navigateToLoginSection()
         const account = {
-            username: userData.generateUserName(2000),
-            password: userData.generatePassword()
+            username: userDataFixture.generateUserName(2000),
+            password: userDataFixture.generatePassword()
         }
         await accountCreator.create(account).catch(f=> expect(f).toBeFalsy)
         await authFixture.loginFailure(account, "userNotExist")

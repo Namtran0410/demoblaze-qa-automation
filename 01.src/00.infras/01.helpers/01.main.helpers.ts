@@ -32,7 +32,11 @@ export class MainHelpers extends BasePage {
         await expect(this.page).toHaveURL(/prod\.html\?idp_=/)
     }
     async goToNav(barName: "Home (current)" | "Contact"| "About us" | "Cart" | "Log out") {
-        (await this.main.getNavBar(barName)).click()
+        await (await this.main.getNavBar(barName)).click()
+    }
+    async getProductPrice(productName: string) {
+        const price = this.pages.main.productPrice(productName)
+        return price
     }
 }
 

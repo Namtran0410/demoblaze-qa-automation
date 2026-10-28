@@ -21,16 +21,16 @@ test.describe("Login | Login modal", ()=>{
     })
     //TODO: PASSED
     test("LG-013 | UI | Login with wrong password", async({
-        accountCreator, authFixture, userData
+        accountCreator, authFixture, userDataFixture
     })=> {
         const account = await accountCreator.create({
-            username: userData.generateUserName(),
-            password: userData.generatePassword()  
+            username: userDataFixture.generateUserName(),
+            password: userDataFixture.generatePassword()  
         })
         await authFixture.navigateToLoginSection()
         await authFixture.loginFailure({
             username: account.username,
-            password: userData.generatePassword()
+            password: userDataFixture.generatePassword()
         }, "wrongPassword")
     })
     //TODO: PASSED

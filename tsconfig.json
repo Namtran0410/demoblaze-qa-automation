@@ -10,12 +10,12 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
-      "@infras/*": ["./01.src/00.infras/*"],
-      "@business/*": ["./01.src/01.business/*"],
-      "@fixture/*": ["./01.src/02.fixture/*"],
-      "@data/*": ["./01.src/03.data/*"],
-      "@utils/*": ["./01.src/04.utils/*"]
+      "@infras/*": ["./src/infras/*"],
+      "@business/*": ["./src/business/*"],
+      "@fixture/*": ["./src/fixtures/*"],
+      "@data/*": ["./src/data/*"],
+      "@utils/*": ["./src/utils/*"]
     }
   },
-  "include": ["playwright.config.ts", "01.src/**/*.ts", "02.test/**/*.ts"]
+  "include": ["playwright.config.ts", "src/**/*.ts", "tests/**/*.ts"]
 }

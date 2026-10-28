@@ -20,13 +20,10 @@ test.describe("Login | Login modal", ()=>{
         await authFixture.loginSuccess(account)
     })
     //TODO: PASSED
+    // The account fixture registers a timestamped username; a short random one could already be taken on the public site
     test("LG-013 | UI | Login with wrong password", async({
-        accountCreator, authFixture, userDataFixture
+        account, authFixture, userDataFixture
     })=> {
-        const account = await accountCreator.create({
-            username: userDataFixture.generateUserName(),
-            password: userDataFixture.generatePassword()  
-        })
         await authFixture.navigateToLoginSection()
         await authFixture.loginFailure({
             username: account.username,
@@ -35,70 +32,54 @@ test.describe("Login | Login modal", ()=>{
     })
     //TODO: PASSED
     test("LG-014 | UI | Login with non-existent username", async({
-        accountCreator, authFixture, userDataFixture
+        authFixture, userDataFixture
     })=> {
-        const account = await accountCreator.create({
-            username: userDataFixture.generateUserName(),
-            password: userDataFixture.generatePassword()  
-        })
+        // Never registered, so no account is needed
+        const neverRegistered = userDataFixture.generateAccount()
         await authFixture.navigateToLoginSection()
-        await authFixture.loginFailure({
-            username: userDataFixture.generateUserName(),
-            password: account.password
-        }, "userNotExist")
+        await authFixture.loginFailure(neverRegistered, "userNotExist")
     })
     //TODO: PASSED
 
     test("LG-015 | UI | Password is case-sensitive", async({
-        accountCreator, authFixture, userDataFixture
+        account, authFixture
     })=> {
-    const invertCase = (text: string) =>
-        [...text].map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join("")  
-    const account = {
-        username: userDataFixture.generateUserName(),
-        password: userDataFixture.generatePassword()
-    }
-    await accountCreator.create(account)
-    await authFixture.navigateToLoginSection()
-    await authFixture.loginFailure({
-        username: account.username,
-        password: invertCase(account.password)
-    }, "wrongPassword")
+        const invertCase = (text: string) =>
+            [...text].map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join("")
+        const wrongCase = invertCase(account.password)
+        // A password without letters would stay the same and log in, failing the test for the wrong reason
+        expect(wrongCase, "the password must contain letters to flip").not.toBe(account.password)
+
+        await authFixture.navigateToLoginSection()
+        await authFixture.loginFailure({
+            username: account.username,
+            password: wrongCase
+        }, "wrongPassword")
     })
     //TODO: PASSED
-    
+
     test("LG-019 | UI | Username with leading/trailing spaces", async({
-        accountCreator, authFixture, userDataFixture
+        account, authFixture
     })=> {
-    const account = {
-        username: userDataFixture.generateUserName(),
-        password: userDataFixture.generatePassword()
-    }
-    await accountCreator.create(account)
-    await authFixture.navigateToLoginSection()
-    await authFixture.loginFailure({
-        username: " "+ account.username + " ",
-        password: account.password
-    }, "userNotExist")
+        await authFixture.navigateToLoginSection()
+        await authFixture.loginFailure({
+            username: " "+ account.username + " ",
+            password: account.password
+        }, "userNotExist")
     })
     //TODO: PASSED
     test("LG-020 | UI | Username in different letter case", async({
-        accountCreator, authFixture, userDataFixture
+        account, authFixture
     })=> {
-    const account = {
-        username: userDataFixture.generateUserName(),
-        password: userDataFixture.generatePassword()
-    }
-    await accountCreator.create(account)
-    await authFixture.navigateToLoginSection()
-    await authFixture.loginFailure({
-        username: account.username.toUpperCase(),
-        password: account.password
-    }, "userNotExist")
+        await authFixture.navigateToLoginSection()
+        await authFixture.loginFailure({
+            username: account.username.toUpperCase(),
+            password: account.password
+        }, "userNotExist")
     })
     //TODO: PASSED
     test("LG-022 | UI | Double-click 'Log in' button", async({
-        account, authFixture, userDataFixture, page
+        account, authFixture, page
     })=> {
         const dialogs: string[] = []
         page.on("dialog", async dialog => {
@@ -108,9 +89,11 @@ test.describe("Login | Login modal", ()=>{
         await authFixture.navigateToLoginSection()
         await authFixture.loginFillUsername(account.username)
         await authFixture.loginFillPassword(account.password)
-        await authFixture.clickOnLoginButton()
-        await authFixture.clickOnLoginButton()
-        expect(dialogs).toEqual([])
+        await authFixture.pages.auth.loginButton.dblclick()
+
+        // Check after login has finished: an error alert would have arrived by then
+        await authFixture.greetingUserAppear(account)
+        expect(dialogs, "no error alert should be shown").toEqual([])
     })
     //TODO: PASSED
 })

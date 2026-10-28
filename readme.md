@@ -96,8 +96,9 @@ npx playwright show-trace <path to trace.zip>
 01.src/
   00.infras/
     00.pages/          Page objects (00.index.page.ts groups every page)
-    01.helpers/        Reusable test steps built on the page objects
-  01.business/         Business flows
+    01.helpers/        Reusable UI test steps built on the page objects
+    02.api/            API clients, one per endpoint group (00.index.api.ts groups them)
+  01.business/         Business flows that span several pages or mix UI and API (e.g. account creation)
   02.fixture/          Playwright fixtures (00.index.fixture.ts merges all of them)
   03.data/             Test data
   04.utils/            Utility functions

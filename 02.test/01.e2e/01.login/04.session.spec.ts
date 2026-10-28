@@ -1,4 +1,5 @@
 import {test, expect} from "@fixture/00.index.fixture"
+import AuthHelpers from "@infras/01.helpers/02.login.helpers"
 
 test.describe("Login | Login modal", ()=>{
     test.beforeEach("Navigation to main page", async({mainFixture})=> {
@@ -32,15 +33,26 @@ test.describe("Login | Login modal", ()=>{
     })
     //TODO: PASSED
     test("LG-023 | Logout in one tab invalidates other tab after reload", async({
-        account, 
+        account,
         authFixture,
-        mainFixture
+        context
     })=> {
+        // Tab A: log in
         await authFixture.navigateToLoginSection()
         await authFixture.loginSuccess(account)
+
+        // Tab B: a second tab of the same browser shares the session
+        const tabB = await context.newPage()
+        const authB = new AuthHelpers(tabB)
+        // Not MainHelpers.goto(): it checks the logged-out navbar (Log in / Sign up), but tab B is already logged in
+        await tabB.goto("/")
+        await authB.greetingUserAppear(account)
+
+        // Log out in tab A, then reload tab B
         await authFixture.logoutSuccessful()
-        await mainFixture.goToNav("Cart")
-        await authFixture.greetingUserHidden()
+        await authB.reload()
+        await authB.greetingUserHidden()
+        await expect(authB.pages.main.taskBarLogin).toBeVisible()
     })
     //TODO: PASSED
     test("LG-024 | Auth token cookie lifecycle", async ({ context, account, authFixture }) => {

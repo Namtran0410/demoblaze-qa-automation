@@ -10,11 +10,12 @@ export abstract class BasePage {
     const actionPromise = action()
     const dialog = await dialogPromise
     const message = dialog.message()
+    // Accept before checking: a failed check with the alert still open would leave the click hanging until timeout
+    await dialog.accept()
+    await actionPromise
     if(expectedMessage) {
       expect(message).toContain(expectedMessage)
     }
-    await dialog.accept()
-    await actionPromise
     return message
   }
   

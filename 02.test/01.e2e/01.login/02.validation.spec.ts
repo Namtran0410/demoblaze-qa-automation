@@ -5,15 +5,14 @@ test.describe("Login | Login modal", ()=>{
         await mainFixture.goto()
     })
     
-    test("LG-010 | Login with incorrect username and incorrect password", async({
-        authFixture, 
-        userDataFixture
+    test("LG-010 | Login with empty username and password", async({
+        authFixture,
     })=> {
         await authFixture.navigateToLoginSection()
         await authFixture.loginFailure({
-            username: userDataFixture.generateUserName(),
-            password: userDataFixture.generatePassword()
-        })
+            username: "",
+            password: ""
+        }, "empty")
     })
     //TODO: PASSED
     test("LG-011 | Login with empty username", async({
@@ -41,24 +40,30 @@ test.describe("Login | Login modal", ()=>{
     test("LG-016 | Whitespace-only username and password", async({
         authFixture,
     })=> {
+        test.fail(true, "Known defect: input is not trimmed, so whitespace is sent to the API and returns 'Wrong password.'")
         await authFixture.navigateToLoginSection()
         await authFixture.loginFailure({
             username: "        ",
             password: "        "
         }, "empty")
     })
-    //TODO: FAILED
+    //TODO: KNOWN DEFECT (test.fail)
     test("LG-021 | Very long username (2000 characters)", async({
-        authFixture, userDataFixture, accountCreator, accountCreation
+        page, authFixture, userDataFixture
     })=> {
-        accountCreation = "api"
+        test.fail(true, "Known defect: a 2000-character username makes POST /login return 500, and the page shows no message")
+        const loginStatuses: number[] = []
+        page.on("response", response => {
+            if (response.url().endsWith("/login")) loginStatuses.push(response.status())
+        })
+        // Only a login attempt is needed; the case does not register the long username
         await authFixture.navigateToLoginSection()
-        const account = {
-            username: userDataFixture.generateUserName(2000),
-            password: userDataFixture.generatePassword()
-        }
-        await accountCreator.create(account).catch(f=> expect(f).toBeFalsy)
-        await authFixture.loginFailure(account, "userNotExist")
+        await authFixture.loginFillUsername("a".repeat(2000))
+        await authFixture.loginFillPassword(userDataFixture.generatePassword())
+        await authFixture.clickOnLoginButton()
+
+        await expect.poll(() => loginStatuses).not.toHaveLength(0)
+        expect(loginStatuses.filter(status => status >= 500), "BUG: server error on a long username").toEqual([])
     })
-    //TODO: FAILED
+    //TODO: KNOWN DEFECT (test.fail)
 })

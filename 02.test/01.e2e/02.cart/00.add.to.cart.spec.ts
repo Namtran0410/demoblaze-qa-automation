@@ -77,13 +77,31 @@ test.describe("Cart | Cart modal", ()=>{
     })
     //TODO: PASSED
     test("CT-017 | Rapid double-click 'Add to cart'", async({
-        cartFixture, productDataFixture, mainFixture
+        cartFixture, productDataFixture, mainFixture, page
     })=>{
         const s6 = productDataFixture.samsungGalaxyS6
-        await cartFixture.addProductToCart(s6)
-        await cartFixture.clickAddToCart()
+        // Count every "Product added" alert and every add request, since a double-click can send one or two
+        const addedAlerts: string[] = []
+        page.on("dialog", async dialog => {
+            if (dialog.message().includes("Product added")) addedAlerts.push(dialog.message())
+            await dialog.accept()
+        })
+        let sent = 0
+        let answered = 0
+        page.on("request", request => { if (request.url().endsWith("/addtocart")) sent++ })
+        page.on("response", response => { if (response.url().endsWith("/addtocart")) answered++ })
 
-        await cartFixture.addToCartSuccessful([s6, s6])
+        await mainFixture.pages.main.product(s6.name).click()
+        await cartFixture.navigateToAddingProductPage(s6)
+        await cartFixture.pages.cart.addToCartButton.dblclick()
+
+        // Wait until every add request has its answer and its alert
+        await expect.poll(() => sent > 0 && answered === sent && addedAlerts.length === sent).toBeTruthy()
+
+        // The number of rows equals the number of successful "Product added" alerts
+        await cartFixture.addToCartSuccessful(Array(addedAlerts.length).fill(s6))
+        await expect(cartFixture.pages.cart.cartRow(s6.name)).toHaveCount(addedAlerts.length)
+        await cartFixture.cartTotalPrice()
     })
     //TODO: PASSED
 })

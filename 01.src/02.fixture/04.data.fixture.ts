@@ -7,10 +7,11 @@ type DataFixture = {
 }
 
 export const test = base.extend<DataFixture>({
-    userDataFixture: ({}, use)=> {
-        use(new IndexData.user())
+    // use() must be awaited, or the fixture is torn down before the test finishes
+    userDataFixture: async ({}, use)=> {
+        await use(new IndexData.user())
     },
-    productDataFixture: ({}, use)=>{
-        use(IndexData.productInfor)
+    productDataFixture: async ({}, use)=>{
+        await use(IndexData.productInfor)
     }
 })

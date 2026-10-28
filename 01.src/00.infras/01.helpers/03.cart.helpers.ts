@@ -60,10 +60,10 @@ export class CartHelpers extends BasePage {
     }
 
     async navigateToAddingProductPage(productInfor: productInforType) {
-        expect(await this.pages.cart.productName.innerText()).toEqual(productInfor.name)
-        expect(await this.pages.cart.productPrice.innerText()).toEqual(productInfor.price)
-        expect(this.pages.cart.productDetail).toBeVisible()
-
+        // The details load from the API; toHaveText retries until they are filled in
+        await expect(this.pages.cart.productDetail).toBeVisible()
+        await expect(this.pages.cart.productName).toHaveText(productInfor.name)
+        await expect(this.pages.cart.productPrice).toHaveText(productInfor.price)
     }
     /* Open the Cart and check each added product has a row with its name and price */
     async addToCartSuccessful(products: productInforType[]){
@@ -71,8 +71,11 @@ export class CartHelpers extends BasePage {
         await expect(this.page).toHaveURL(/cart\.html/)
         await expect(this.pages.cart.cartTitle).toBeVisible()
 
-        for (const product of new Set(products)) {
-            const addedRows = products.filter(p => p === product).length
+        // Group by name, not by object: two equal products built separately are still the same product
+        const names = [...new Set(products.map(p => p.name))]
+        for (const name of names) {
+            const product = products.find(p => p.name === name)!
+            const addedRows = products.filter(p => p.name === name).length
             // The cart shows the price as a bare number ("360"), the product page as "$360 *includes tax"
             const cartPrice = product.price.replace(/\D/g, "")
             const rows = this.pages.cart.cartRow(product.name)
@@ -89,7 +92,8 @@ export class CartHelpers extends BasePage {
         const totalPrice = priceList.reduce((acc: number, curr: number): number => {
             return acc + curr;
         }, 0)
-        expect(await this.pages.cart.cartTotal.innerText()).toEqual(String(totalPrice))
+        // The total is filled in after the rows, so retry instead of reading it once
+        await expect(this.pages.cart.cartTotal).toHaveText(String(totalPrice))
         return String(totalPrice)
     }
     /* Open the Cart and check it has no rows and no total */

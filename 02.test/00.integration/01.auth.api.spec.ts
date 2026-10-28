@@ -1,4 +1,4 @@
-import { LoginError } from "@business/02.auth/00.api.auth"
+import { LoginError } from "@infras/02.api/01.api.auth"
 import {test, expect} from "@fixture/00.index.fixture"
 
 test.describe("Login | Login modal", ()=>{
@@ -16,7 +16,8 @@ test.describe("Login | Login modal", ()=>{
         authApi, account, userDataFixture
     })=> {
         await authApi.loginFailure({
-            username: userDataFixture.generateUserName(),
+            // A short random name can match an existing user on the public site; the timestamped one cannot
+            username: userDataFixture.generateAccount().username,
             password: account.password
         }, LoginError.userNotExist)
     })

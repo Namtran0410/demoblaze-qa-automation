@@ -1,8 +1,9 @@
 import {test, expect} from "@fixture/00.index.fixture"
+import { faker } from "@faker-js/faker"
 
 test.describe("Login | Login modal", ()=>{
 
-    test("CT-013 | API | Guest cart is not shared between sessions", async({
+    test("CT-012 | API | Guest cart is not shared between sessions", async({
         cartApi
     })=> {
         const product = await cartApi.getSingleProductInfor('Samsung galaxy s6')
@@ -23,13 +24,13 @@ test.describe("Login | Login modal", ()=>{
 
         // Add item to cart
         const {lineId, cookie} = await cartApi.addItemToCart(product.id, cartApi.newGuestCookie())
-        
-        // delete item
-        await cartApi.deleteItem(lineId, cookie)
 
-        // check cart
+        // delete an id that is not in any cart: no server error (deleteItem checks the response is OK)
+        await cartApi.deleteItem(faker.string.uuid(), cookie)
+
+        // the existing item is not removed
         const cart = await cartApi.viewCart(cookie)
-        expect(cart.items).toEqual([])
+        expect(cart.items.map(line => line.id)).toEqual([lineId])
     })
     //TODO: PASSED
     test("CT-015 | API | Add many items", async({

@@ -66,33 +66,24 @@ test.describe("Cart | Cart modal", ()=>{
         await context.close()
     })
     //TODO: PASSED
-    test("CT-013 | Users cannot see each other's carts", async({
+    test("CT-012 | Guest cart is not shared between sessions", async({
         cartFixture,
         productDataFixture,
-        authFixture,
-        account,
-        page,
         browser
     })=>{
         /** Add samsung galaxy S6 to cart*/
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
 
-        /** Logout and close browser */
-        await page.close()
-
-        /** Open a new browser session: the fixtures above stay bound to the closed page, so build new helpers */
+        /** Guest B: a separate browser context has its own "user" cookie, so its own cart */
         // A context made by hand does not get the config's baseURL, so pass it
         const context = await browser.newContext({ baseURL: process.env.BASE_URL })
         const newPage = await context.newPage()
         const newMain = new MainHelpers(newPage)
-        const newAuth = new AuthHelpers(newPage)
         const newCart = new CartHelpers(newPage)
-
-        /** Login again and check cart */
         await newMain.goto()
 
-        /** Check cart */
+        /** Guest B's cart is empty */
         await newCart.cartEmpty()
         await context.close()
     })

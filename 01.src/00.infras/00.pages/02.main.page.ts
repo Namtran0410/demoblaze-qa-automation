@@ -67,7 +67,8 @@ export class MainPage extends BasePage {
     }
     // A card has no role, so pick the .card that holds the product's title link
     productCard(name: string): Locator {
-        return this.productList.locator(".card").filter({ has: this.product(name) })
+        // "has" is searched inside each card, so it must not start from #tbodyid again
+        return this.productList.locator(".card").filter({ has: this.page.getByRole("link", { name, exact: true }) })
     }
     // Text is "$360" (no "*includes tax" here, unlike the product page)
     productPrice(name: string): Locator {

@@ -10,7 +10,6 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
-      "@config/*": ["./03.config/*"],
       "@infras/*": ["./01.src/00.infras/*"],
       "@business/*": ["./01.src/01.business/*"],
       "@fixture/*": ["./01.src/02.fixture/*"],
@@ -18,5 +17,5 @@
       "@utils/*": ["./01.src/04.utils/*"]
     }
   },
-  "include": ["playwright.config.ts", "01.src/**/*.ts", "02.test/**/*.ts", "03.config/**/*.ts"]
+  "include": ["playwright.config.ts", "01.src/**/*.ts", "02.test/**/*.ts"]
 }

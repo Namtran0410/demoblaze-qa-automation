@@ -1,6 +1,5 @@
 import { Account } from "@business/01.account/00.account.creator";
 import { APIRequestContext, expect } from "@playwright/test";
-import { env } from "@config/env";
 
 export const LoginError = {
     wrongPassword: {
@@ -18,7 +17,7 @@ export class ApiAuth {
 
     // The site sends the password base64-encoded, so do the same
     private async login(account: Account) {
-        return this.request.post(`${env.apiUrl}/login`, {
+        return this.request.post(`${process.env.API_URL}/login`, {
             data: {
                 username: account.username,
                 password: Buffer.from(account.password).toString("base64")

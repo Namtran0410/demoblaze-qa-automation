@@ -10,7 +10,8 @@ type BusinessFixtures = {
     accountCreator: AccountCreator
     // A freshly registered account for the test
     account: Account
-    authApi: InstanceType<typeof IndexBusiness.authApi>
+    authApi: InstanceType<typeof IndexBusiness.authApi>,
+    cartApi: InstanceType<typeof IndexBusiness.cartApi>
 }
 
 export const test = base.extend<BusinessFixtures>({
@@ -26,4 +27,8 @@ export const test = base.extend<BusinessFixtures>({
     authApi: async ({ request }, use) => {
         await use(new IndexBusiness.authApi(request))
     },
+    cartApi: async({request}, use) => {
+        await use(new IndexBusiness.cartApi(request))
+    }
+
 })

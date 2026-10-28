@@ -1,5 +1,4 @@
 import {test, expect} from "@fixture/00.index.fixture"
-import { env } from "@config/env"
 import MainHelpers from "@infras/01.helpers/01.main.helpers"
 import AuthHelpers from "@infras/01.helpers/02.login.helpers"
 import CartHelpers from "@infras/01.helpers/03.cart.helpers"
@@ -51,7 +50,7 @@ test.describe("Cart | Cart modal", ()=>{
 
         /** Open a new browser session: the fixtures above stay bound to the closed page, so build new helpers */
         // A context made by hand does not get the config's baseURL, so pass it
-        const context = await browser.newContext({ baseURL: env.baseUrl })
+        const context = await browser.newContext({ baseURL: process.env.BASE_URL })
         const newPage = await context.newPage()
         const newMain = new MainHelpers(newPage)
         const newAuth = new AuthHelpers(newPage)
@@ -84,7 +83,7 @@ test.describe("Cart | Cart modal", ()=>{
 
         /** Open a new browser session: the fixtures above stay bound to the closed page, so build new helpers */
         // A context made by hand does not get the config's baseURL, so pass it
-        const context = await browser.newContext({ baseURL: env.baseUrl })
+        const context = await browser.newContext({ baseURL: process.env.BASE_URL })
         const newPage = await context.newPage()
         const newMain = new MainHelpers(newPage)
         const newAuth = new AuthHelpers(newPage)

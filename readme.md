@@ -50,7 +50,7 @@ npm run test:chromium
 
 ## Environment variables
 
-Variables are read from `.env`. Any variable that is not set falls back to its default.
+Variables are read from `.env` by `playwright.config.ts` and used in code as `process.env.<NAME>`. If `BASE_URL` or `API_URL` is not set, it falls back to its default.
 
 | Variable        | Default                     | Used for                                       |
 | --------------- | --------------------------- | ---------------------------------------------- |
@@ -105,8 +105,7 @@ npx playwright show-trace <path to trace.zip>
   00.integration/      Integration tests (`*.api.spec.ts` files run in the `api` project, the rest run in the browsers)
   01.e2e/              UI tests, one folder per feature (01.login, 02.cart, 03.order)
   02.perf/             Performance tests (Playwright does not run this folder)
-03.config/             Environment configuration (env.ts)
-playwright.config.ts   Playwright configuration
+playwright.config.ts   Playwright configuration (also loads `.env`)
 ```
 
 Tests import `test` and `expect` from the merged fixture instead of `@playwright/test`:
@@ -115,4 +114,4 @@ Tests import `test` and `expect` from the merged fixture instead of `@playwright
 import { test, expect } from "@fixture/00.index.fixture"
 ```
 
-Path aliases can be used instead of relative paths: `@config/*`, `@infras/*`, `@business/*`, `@fixture/*`, `@data/*`, `@utils/*` (declared in `tsconfig.json`).
+Path aliases can be used instead of relative paths: `@infras/*`, `@business/*`, `@fixture/*`, `@data/*`, `@utils/*` (declared in `tsconfig.json`).

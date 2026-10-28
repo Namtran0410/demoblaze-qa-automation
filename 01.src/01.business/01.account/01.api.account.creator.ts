@@ -1,12 +1,11 @@
 import { Account, AccountCreator } from "@business/01.account/00.account.creator";
 import { APIRequestContext, expect } from "@playwright/test";
-import { env } from "@config/env";
 
 export class ApiAccountCreator implements AccountCreator {
     constructor(private readonly request: APIRequestContext){}
     async create(account: Account): Promise<Account> {
         const response = await this.request.post(
-            `${env.apiUrl}/signup`,
+            `${process.env.API_URL}/signup`,
             {
                 // The site sends the password base64-encoded, so do the same or UI login will fail
                 data: {

@@ -1,5 +1,4 @@
 import {test, expect} from "@fixture/00.index.fixture"
-import { env } from "@config/env"
 import MainHelpers from "@infras/01.helpers/01.main.helpers"
 import AuthHelpers from "@infras/01.helpers/02.login.helpers"
 import CartHelpers from "@infras/01.helpers/03.cart.helpers"

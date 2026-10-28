@@ -7,18 +7,58 @@ import { productInforType } from "@data/03.product.infor";
 export class CartHelpers extends BasePage {
     readonly pages = new IndexPage(this.page)
 
+    async clickAddToCart(){
+        
+        await this.pages.main.acceptDialog(
+        async ()=> await this.pages.cart.addToCartButton.click(),
+            IndexData.dialogMessage.addToCartSuccess)
+    }
     /* Add the product from its detail page and return the price shown there, as a number */
     async addProductToCart(productInfor: productInforType): Promise<string> {
         await this.pages.main.product(productInfor.name).click()
         await this.navigateToAddingProductPage(productInfor)
         // The product page shows "$360 *includes tax"; keep only the digits
         const price = Number((await this.pages.cart.productPrice.innerText()).replace(/\D/g, ""))
-        await this.pages.main.acceptDialog(
-            ()=> this.pages.cart.addToCartButton.click(),
-            IndexData.dialogMessage.addToCartSuccess
-        )
+        await this.clickAddToCart()
         return String(price)
     }
+    /* Read every product on the home page, page by page (9 on the first page, the rest behind Next) */
+    async getAllHomeProducts(): Promise<(productInforType & { url: string })[]> {
+        const { main } = this.pages
+        await expect(main.productTitles.first()).toBeVisible()
+        const products: (productInforType & { url: string })[] = []
+        while (true) {
+            const names = await main.productTitles.allInnerTexts()
+            for (const name of names) {
+                const url = await main.product(name).getAttribute("href")
+                // The card shows "$360"; the product page adds " *includes tax"
+                const price = await main.productPrice(name).innerText()
+                products.push({ name, price: `${price} *includes tax`, url: url! })
+            }
+            // Next is hidden on the last page
+            if (!(await main.paginationNext.isVisible())) break
+            await main.paginationNext.click()
+            // The list is redrawn in place, so wait until the first title changes
+            await expect(main.productTitles.first()).not.toHaveText(names[0])
+        }
+        return products
+    }
+
+    /* Add every product of the home page to the cart, one by one through its detail page */
+    async addAllProductsToCart(): Promise<productInforType[]> {
+        const products = await this.getAllHomeProducts()
+        for (const product of products) {
+            // Opening the detail page by its link avoids paging through the list again for each product
+            await this.page.goto(product.url)
+            await this.navigateToAddingProductPage(product)
+            await this.acceptDialog(
+                () => this.pages.cart.addToCartButton.click(),
+                IndexData.dialogMessage.addToCartSuccess
+            )
+        }
+        return products
+    }
+
     async navigateToAddingProductPage(productInfor: productInforType) {
         expect(await this.pages.cart.productName.innerText()).toEqual(productInfor.name)
         expect(await this.pages.cart.productPrice.innerText()).toEqual(productInfor.price)

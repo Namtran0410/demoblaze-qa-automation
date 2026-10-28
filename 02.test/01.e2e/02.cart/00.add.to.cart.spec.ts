@@ -65,4 +65,25 @@ test.describe("Cart | Cart modal", ()=>{
         ])
     })
     //TODO: PASSED
+    test("CT-015 | Add many items (10) or max", async({
+        cartFixture,
+    })=>{
+        // Adds all 9 products, so give it more than the default 30s
+        const products = await cartFixture.addAllProductsToCart()
+        expect(products.length).toBeGreaterThanOrEqual(9)
+
+        await cartFixture.addToCartSuccessful(products)
+        await cartFixture.cartTotalPrice()
+    })
+    //TODO: PASSED
+    test("CT-017 | Rapid double-click 'Add to cart'", async({
+        cartFixture, productDataFixture, mainFixture
+    })=>{
+        const s6 = productDataFixture.samsungGalaxyS6
+        await cartFixture.addProductToCart(s6)
+        await cartFixture.clickAddToCart()
+
+        await cartFixture.addToCartSuccessful([s6, s6])
+    })
+    //TODO: PASSED
 })

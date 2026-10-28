@@ -1,5 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
-import { env } from './03.config/env';
+import path from 'node:path';
+import dotenv from 'dotenv';
+
+// Load .env, then fill in defaults so process.env.BASE_URL / API_URL are always set (workers reload this file too)
+dotenv.config({ path: path.resolve(__dirname, '.env'), quiet: true });
+process.env.BASE_URL ??= 'https://www.demoblaze.com';
+process.env.API_URL ??= 'https://api.demoblaze.com';
+const isCI = !!process.env.CI;
 
 // API tests are marked by the *.api.spec.ts suffix, so every other spec under 02.test runs in the browsers.
 // A project-level testIgnore replaces the top-level one, so perf is listed again
@@ -34,9 +41,9 @@ export default defineConfig({
   testDir: './02.test',
   testIgnore: '02.perf/**', // perf tests run with a dedicated tool, not Playwright
   fullyParallel: true,
-  forbidOnly: env.isCI,
-  retries: env.isCI ? 2 : 0,
-  workers: env.isCI ? 2 : undefined,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  workers: isCI ? 2 : undefined,
   timeout: 30_000,
   expect: { timeout: 10_000 },
 
@@ -47,7 +54,7 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: env.baseUrl,
+    baseURL: process.env.BASE_URL,
     trace: 'on',
     screenshot: 'on',
     video: 'on',
@@ -59,7 +66,7 @@ export default defineConfig({
     {
       name: 'api',
       testMatch: apiTestMatch,
-      use: { baseURL: env.apiUrl },
+      use: { baseURL: process.env.API_URL },
     },
     // UI projects pick up every spec under 02.test except *.api.spec.ts and perf tests
     {

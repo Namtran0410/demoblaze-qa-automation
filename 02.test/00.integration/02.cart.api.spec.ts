@@ -17,6 +17,27 @@ test.describe("Login | Login modal", ()=>{
         expect(otherGuestCart.items).toEqual([])
     })
     //TODO: PASSED
+    test("CT-013 | API | Users cannot see each other's carts", async({
+        accountCreator, authApi, cartApi, userDataFixture
+    })=> {
+        // Two registered users, each with their own auth token (a token makes the cart calls use flag true)
+        const userA = await accountCreator.create(userDataFixture.generateAccount())
+        const userB = await accountCreator.create(userDataFixture.generateAccount())
+        const tokenA = await authApi.loginSuccess(userA)
+        const tokenB = await authApi.loginSuccess(userB)
+
+        // User A adds a product
+        const product = await cartApi.getSingleProductInfor('Nokia lumia 1520')
+        const { lineId } = await cartApi.addItemToCart(product.id, tokenA)
+
+        // User A sees the item, so the add really worked
+        const cartA = await cartApi.viewCart(tokenA)
+        expect(cartA.items.map(line => line.id)).toContain(lineId)
+
+        // User B's cart does not contain user A's item
+        const cartB = await cartApi.viewCart(tokenB)
+        expect(cartB.items.map(line => line.id)).not.toContain(lineId)
+    })
     test("CT-014 | API | Delete with invalid item id (API)", async({
         cartApi
     })=> {

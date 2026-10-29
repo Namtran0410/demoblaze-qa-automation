@@ -98,12 +98,19 @@ Performance tests in `tests/perf` run with [k6](https://grafana.com/docs/k6/late
 **Linux** (Ubuntu / Debian):
 
 ```bash
-sudo gpg -k
-sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+# 1. Download k6's signing key over HTTPS and store it for apt
+curl -fsSL https://dl.k6.io/key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/k6-archive-keyring.gpg > /dev/null
+
+# 2. Check it is k6's key: the fingerprint must be C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+gpg --show-keys /usr/share/keyrings/k6-archive-keyring.gpg
+
+# 3. Add the k6 repository and install
 echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
 sudo apt-get update
-sudo apt-get install k6
+sudo apt-get install -y k6
 ```
+
+Step 1 does not use a keyserver. The command often shown in the k6 docs fetches the key from `hkp://keyserver.ubuntu.com:80` instead, which fails when port 80 is blocked or the keyserver is busy (`gpg: keyserver receive failed`). If that happened, you may be left with an empty key file and `apt-get update` then reports `NO_PUBKEY C5AD17C747E3415A`. Run the three steps above again: step 1 overwrites the key file.
 
 Without `sudo`, download `k6-<version>-linux-amd64.tar.gz` from the [k6 releases](https://github.com/grafana/k6/releases) page and copy the `k6` file from it into a folder on your `PATH`, e.g. `~/.local/bin`.
 
@@ -113,7 +120,15 @@ Check it (any OS), the project uses k6 v2.3:
 k6 version
 ```
 
-k6 runs TypeScript scripts directly. `tests/perf` has its own `tsconfig.json` with the k6 types (`@types/k6`, installed by `npm ci`), because k6 scripts do not run on Node. Check them with `npx tsc -p tests/perf`; `npm run typecheck` does not cover this folder.
+k6 runs TypeScript scripts directly. `tests/perf` has its own `tsconfig.json` with the k6 types (`@types/k6`), because k6 scripts do not run on Node. Check them with `npx tsc -p tests/perf`; `npm run typecheck` does not cover this folder.
+
+The k6 types come from `node_modules`, not from the k6 program. If the editor shows `k6/http`, `k6/execution` or `__ENV` in red, or `npx tsc -p tests/perf` says `Cannot find type definition file for 'k6'`, the types are not installed yet:
+
+```bash
+npm install
+```
+
+Run it again whenever `package.json` changes (for example after a `git pull`), then in VS Code run **TypeScript: Restart TS Server**.
 
 ### Windows: `running scripts is disabled on this system`
 
@@ -193,6 +208,20 @@ k6 run tests/perf/<script>.ts
 ```
 
 k6 does not read `.env`. Pass variables with `-e`, e.g. `k6 run -e API_URL=https://api.demoblaze.com tests/perf/<script>.ts`, and read them in the script as `__ENV.API_URL`. Keep the load small: demoblaze is a public demo site.
+
+Check that a script loads without sending any request:
+
+```bash
+k6 inspect tests/perf/<script>.ts
+```
+
+It fails with `no exported functions in script` when the script has no `export default function`. Watch for warnings too: an option with a wrong name is only warned about and then ignored, e.g. `threshold` instead of `thresholds` drops every threshold and the run always passes. Typing the options catches this in the editor:
+
+```ts
+import { Options } from "k6/options"
+
+export const options: Options = { ... }
+```
 
 ## Project structure
 

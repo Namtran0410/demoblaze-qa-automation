@@ -12,10 +12,7 @@ test.describe("Order | Order modal", () => {
     })
     //TODO: PASSED
 
-    test("OD-001 | 'Place Order' opens order form with total", async ({
-        cartFixture,
-        productDataFixture,
-    }) => {
+    test("OD-001 | 'Place Order' opens order form with total", async ({ cartFixture, productDataFixture }) => {
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
         await cartFixture.clickOnPlaceOrder()
@@ -31,7 +28,7 @@ test.describe("Order | Order modal", () => {
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
         await cartFixture.clickOnPlaceOrder()
-        
+
         // Filling the order form
         await orderBusiness.fillOrderForm()
         await orderFixture.clickOnPurchase()
@@ -40,34 +37,32 @@ test.describe("Order | Order modal", () => {
         await orderFixture.getPurchaseConfirmation()
     })
     //TODO: PASSED
-    test.fail("OD-003 | Confirmation details match the order", async ({
-        cartFixture,
-        productDataFixture,
-        orderFixture,
-        orderBusiness,
-    }) => {
-        // add product to the cart
-        await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
-        await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
-        const totalPrice = await cartFixture.clickOnPlaceOrder()
-        
-        // Filling the order form
-        const orderFilled = await orderBusiness.fillOrderForm()
-        await orderFixture.clickOnPurchase()
+    test.fail(
+        "OD-003 | Confirmation details match the order",
+        async ({ cartFixture, productDataFixture, orderFixture, orderBusiness }) => {
+            // add product to the cart
+            await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
+            await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
+            const totalPrice = await cartFixture.clickOnPlaceOrder()
 
-        // Check order purchase successful
-        const purchaseSuccessInfor = await orderFixture.getPurchaseConfirmation()
-        
-        // Only Name and Credit card appear on the popup; its date has no form field to compare with
-        expect(purchaseSuccessInfor.name, "Name").toEqual(orderFilled.name)
-        expect(purchaseSuccessInfor.cardNumber, "Card Number").toEqual(orderFilled["credit card"])
-        expect(purchaseSuccessInfor.amount, "Amount").toEqual(totalPrice)
+            // Filling the order form
+            const orderFilled = await orderBusiness.fillOrderForm()
+            await orderFixture.clickOnPurchase()
 
-        // The popup shows the date as "D/M/YYYY" without leading zeros, e.g. "29/10/2026"
-        const today = new Date()
-        const expectedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`
-        expect(purchaseSuccessInfor.date, "Date").toEqual(expectedDate)
-    })
+            // Check order purchase successful
+            const purchaseSuccessInfor = await orderFixture.getPurchaseConfirmation()
+
+            // Only Name and Credit card appear on the popup; its date has no form field to compare with
+            expect(purchaseSuccessInfor.name, "Name").toEqual(orderFilled.name)
+            expect(purchaseSuccessInfor.cardNumber, "Card Number").toEqual(orderFilled["credit card"])
+            expect(purchaseSuccessInfor.amount, "Amount").toEqual(totalPrice)
+
+            // The popup shows the date as "D/M/YYYY" without leading zeros, e.g. "29/10/2026"
+            const today = new Date()
+            const expectedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`
+            expect(purchaseSuccessInfor.date, "Date").toEqual(expectedDate)
+        },
+    )
     //TODO: FAILED
 
     test("OD-004 | Cart is emptied after purchase", async ({
@@ -75,20 +70,20 @@ test.describe("Order | Order modal", () => {
         productDataFixture,
         orderFixture,
         orderBusiness,
-        mainFixture
+        mainFixture,
     }) => {
         // add product to the cart
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
         await cartFixture.clickOnPlaceOrder()
-        
+
         // Filling the order form
         await orderBusiness.fillOrderForm()
         await orderFixture.clickOnPurchase()
 
         // Check order purchase successful
         await orderFixture.getPurchaseConfirmation()
-        
+
         // confirm and navigate to cart
         await orderFixture.clickOnConfirmPurchase()
         await mainFixture.goToNav("Cart")
@@ -97,16 +92,12 @@ test.describe("Order | Order modal", () => {
         await cartFixture.cartEmpty()
     })
     //TODO: PASSED
-    test("OD-005 | Purchase with all fields empty", async ({
-        cartFixture,
-        productDataFixture,
-        orderFixture,
-    }) => {
+    test("OD-005 | Purchase with all fields empty", async ({ cartFixture, productDataFixture, orderFixture }) => {
         // add product to the cart
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
         await cartFixture.clickOnPlaceOrder()
-        
+
         // Purchase with an empty form: the site shows a browser alert instead of the confirmation popup.
         // acceptDialog listens before the click, or Playwright would dismiss the alert before the test sees it.
         await orderFixture.acceptDialog(
@@ -119,13 +110,13 @@ test.describe("Order | Order modal", () => {
         cartFixture,
         productDataFixture,
         orderFixture,
-        orderBusiness
+        orderBusiness,
     }) => {
         // add product to the cart
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
         await cartFixture.clickOnPlaceOrder()
-        
+
         // fill all but credit cart is empty
         await orderBusiness.fillOrderForm()
         await orderFixture.fillField("credit card", "")
@@ -138,17 +129,12 @@ test.describe("Order | Order modal", () => {
         )
     })
     //TODO: PASSED
-    test("OD-007 | Purchase without name", async ({
-        cartFixture,
-        productDataFixture,
-        orderFixture,
-        orderBusiness
-    }) => {
+    test("OD-007 | Purchase without name", async ({ cartFixture, productDataFixture, orderFixture, orderBusiness }) => {
         // add product to the cart
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
         await cartFixture.clickOnPlaceOrder()
-        
+
         // fill all but credit cart is empty
         await orderBusiness.fillOrderForm()
         await orderFixture.fillField("name", "")
@@ -165,86 +151,79 @@ test.describe("Order | Order modal", () => {
         cartFixture,
         productDataFixture,
         orderFixture,
-        orderBusiness
+        orderBusiness,
     }) => {
         // add product to the cart
         await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
         await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
         await cartFixture.clickOnPlaceOrder()
-        
+
         await orderFixture.clickOncloseOrderForm()
     })
     //TODO: PASSED
-    test.fail("OD-009 | Non-numeric credit card number", async ({
-        cartFixture,
-        productDataFixture,
-        orderFixture,
-        orderBusiness
-    }) => {
-        // add product to the cart
-        await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
-        await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
-        await cartFixture.clickOnPlaceOrder()
-        
-        // fill all but credit cart is empty
-        await orderBusiness.fillOrderForm()
-        await orderFixture.fillField("credit card", faker.string.alpha(5))
+    test.fail(
+        "OD-009 | Non-numeric credit card number",
+        async ({ cartFixture, productDataFixture, orderFixture, orderBusiness }) => {
+            // add product to the cart
+            await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
+            await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
+            await cartFixture.clickOnPlaceOrder()
 
-        // Purchase with an empty form: the site shows a browser alert instead of the confirmation popup.
-        // acceptDialog listens before the click, or Playwright would dismiss the alert before the test sees it.
-        await orderFixture.acceptDialog(
-            async () => await orderFixture.clickOnPurchase(),
-            IndexData.dialogMessage.emptyFieldCreditCard,
-        )
-    })
+            // fill all but credit cart is empty
+            await orderBusiness.fillOrderForm()
+            await orderFixture.fillField("credit card", faker.string.alpha(5))
+
+            // Purchase with an empty form: the site shows a browser alert instead of the confirmation popup.
+            // acceptDialog listens before the click, or Playwright would dismiss the alert before the test sees it.
+            await orderFixture.acceptDialog(
+                async () => await orderFixture.clickOnPurchase(),
+                IndexData.dialogMessage.emptyFieldCreditCard,
+            )
+        },
+    )
     //TODO: FAILED
-    test.fail("OD-010 | Invalid month / past year", async ({
-        cartFixture,
-        productDataFixture,
-        orderFixture,
-        orderBusiness
-    }) => {
-        // add product to the cart
-        await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
-        await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
-        await cartFixture.clickOnPlaceOrder()
-        
-        // fill all but credit cart is empty
-        await orderBusiness.fillOrderForm()
-        await orderFixture.fillField("month", "13")
-        await orderFixture.fillField("year", String(new Date().getFullYear() - 1))
+    test.fail(
+        "OD-010 | Invalid month / past year",
+        async ({ cartFixture, productDataFixture, orderFixture, orderBusiness }) => {
+            // add product to the cart
+            await cartFixture.addProductToCart(productDataFixture.samsungGalaxyS6)
+            await cartFixture.addToCartSuccessful([productDataFixture.samsungGalaxyS6])
+            await cartFixture.clickOnPlaceOrder()
 
-        // Purchase with an empty form: the site shows a browser alert instead of the confirmation popup.
-        // acceptDialog listens before the click, or Playwright would dismiss the alert before the test sees it.
-        await orderFixture.acceptDialog(
-            async () => await orderFixture.clickOnPurchase(),
-            IndexData.dialogMessage.emptyFieldCreditCard,
-        )
-    })
+            // fill all but credit cart is empty
+            await orderBusiness.fillOrderForm()
+            await orderFixture.fillField("month", "13")
+            await orderFixture.fillField("year", String(new Date().getFullYear() - 1))
+
+            // Purchase with an empty form: the site shows a browser alert instead of the confirmation popup.
+            // acceptDialog listens before the click, or Playwright would dismiss the alert before the test sees it.
+            await orderFixture.acceptDialog(
+                async () => await orderFixture.clickOnPurchase(),
+                IndexData.dialogMessage.emptyFieldCreditCard,
+            )
+        },
+    )
     //TODO: FAILED
-    test.fail("OD-011 | Place order with empty cart", async ({
-        cartFixture,
-        productDataFixture,
-        orderFixture,
-        orderBusiness,
-        mainFixture
-    }) => {
-        // navigat to cart
-        await mainFixture.goToNav("Cart")
-        await cartFixture.clickOnPlaceOrder()
+    test.fail(
+        "OD-011 | Place order with empty cart",
+        async ({ cartFixture, productDataFixture, orderFixture, orderBusiness, mainFixture }) => {
+            // navigat to cart
+            await mainFixture.goToNav("Cart")
+            await cartFixture.clickOnPlaceOrder()
 
-        // fill all but credit cart is empty
-        await orderBusiness.fillOrderForm()
-        await orderFixture.fillField("month", "13")
-        await orderFixture.fillField("year", String(new Date().getFullYear() - 1))
+            // fill all but credit cart is empty
+            await orderBusiness.fillOrderForm()
+            await orderFixture.fillField("month", "13")
+            await orderFixture.fillField("year", String(new Date().getFullYear() - 1))
 
-        // Purchase with an empty form: the site shows a browser alert instead of the confirmation popup.
-        // acceptDialog listens before the click, or Playwright would dismiss the alert before the test sees it.
-        await orderFixture.acceptDialog(
-            async () => await orderFixture.clickOnPurchase(),
-            IndexData.dialogMessage.emptyFieldCreditCard,
-        )
-    })
+            // Purchase with an empty form: the site shows a browser alert instead of the confirmation popup.
+            // acceptDialog listens before the click, or Playwright would dismiss the alert before the test sees it.
+            await orderFixture.acceptDialog(
+                async () => await orderFixture.clickOnPurchase(),
+                IndexData.dialogMessage.emptyFieldCreditCard,
+            )
+        },
+    )
     //TODO: FAILED
     test("OD-012 | Special / Unicode characters in Name", async ({
         cartFixture,

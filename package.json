@@ -10,7 +10,10 @@
     "test:headed": "playwright test --project=chromium --headed",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "typecheck:perf": "tsc -p tests/perf",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "repository": {
     "type": "git",

@@ -6,8 +6,8 @@ import { orderFormField, PurchaseConfirmation } from "@type/04.order.type"
 
 export class OrderHelpers extends BasePage {
     readonly pages = new IndexPage(this.page)
-    
-    async getOrderPrice(): Promise<string>{
+
+    async getOrderPrice(): Promise<string> {
         const totalPrice = await this.pages.order.orderTotal.innerText()
         return totalPrice
     }
@@ -76,10 +76,9 @@ export class OrderHelpers extends BasePage {
         await expect(this.pages.order.confirmPopup).toBeHidden()
     }
 
-    async clickOncloseOrderForm(){
+    async clickOncloseOrderForm() {
         await this.pages.order.orderCloseButton.click()
         await expect(this.pages.order.confirmPopup).toBeHidden()
     }
-
 }
 export default OrderHelpers

@@ -1,0 +1,123 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the run still going for the older one
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-checks:
+    name: Typecheck, format, k6 scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck (Playwright code)
+        run: npm run typecheck
+
+      - name: Typecheck (k6 scripts)
+        run: npm run typecheck:perf
+
+      - name: Check formatting
+        run: npm run format:check
+
+      # Same install as the readme: the key comes over HTTPS, not from a keyserver
+      - name: Install k6
+        run: |
+          curl -fsSL https://dl.k6.io/key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/k6-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      # Loads every script without sending a request: catches syntax errors, a missing default function, wrong option names
+      - name: Check k6 scripts load
+        run: |
+          for script in tests/perf/*.ts; do
+            echo "::group::$script"
+            k6 inspect "$script" 2>&1 | tee /tmp/inspect.log
+            if grep -q "level=warning" /tmp/inspect.log; then
+              echo "::error file=$script::k6 warned about this script (see above)"
+              exit 1
+            fi
+            echo "::endgroup::"
+          done
+
+  # The smoke profile (PF001: 1 VU, 1 min) runs on every push / PR; load and Web Vitals run nightly in perf.yml
+  perf-smoke:
+    name: k6 smoke (PF001)
+    needs: static-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          curl -fsSL https://dl.k6.io/key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/k6-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      # Exit code 99 = a threshold failed, 108 = the script aborted; either fails the job
+      - name: Run PF001
+        run: k6 run --summary-export=k6-summary.json tests/perf/PF001-Login-smoke-base-line.ts
+
+      - name: Upload summary
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary-PF001
+          path: k6-summary.json
+          retention-days: 14
+
+  playwright:
+    name: Playwright (${{ matrix.project }})
+    needs: static-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      # Keep the other browsers running when one fails, to see every failure in one run
+      fail-fast: false
+      matrix:
+        project: [api, chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The api project needs no browser; the others need theirs plus its Linux libraries
+      - name: Install browser
+        if: matrix.project != 'api'
+        run: npx playwright install --with-deps ${{ matrix.project }}
+
+      # GitHub sets CI=true, so playwright.config.ts uses 2 workers, 2 retries and blocks test.only
+      - name: Run tests
+        run: npx playwright test --project=${{ matrix.project }}
+
+      # The HTML report holds every test's trace, screenshot and video; open it with `npx playwright show-report <folder>`
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 14

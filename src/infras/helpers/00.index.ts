@@ -7,5 +7,5 @@ export const indexHelpers = {
     mainHelpers: MainHelpers,
     authHelpers: AuthHelpers,
     cartHelpers: CartHelpers,
-    orderHelpers: OrderHelpers
+    orderHelpers: OrderHelpers,
 }

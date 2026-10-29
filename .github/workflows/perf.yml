@@ -1,0 +1,79 @@
+name: Performance
+
+# Load and Web Vitals tests send real traffic to the public demoblaze site: nightly, or on demand.
+# The smoke test (PF001) runs on every push in tests.yml.
+on:
+  schedule:
+    # 19:00 UTC = 02:00 in Vietnam (UTC+7)
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+    inputs:
+      script:
+        description: k6 script to run
+        type: choice
+        options:
+          - PF001-Login-smoke-base-line.ts
+          - PF002-Login-API-load.ts
+          - PF003-Add-to-cart.ts
+          - PF004-View-cart-api-load-with-5-items.ts
+          - PF005-Cart-journey-api-load.ts
+          - PF006-Home-page-web-vitals.ts
+          - PF007-Cart-page-web-vitals.ts
+      smoke:
+        description: Smoke run only (1 VU, 2 iterations) instead of the load in the script. Ignored for the Web Vitals scripts, which are already 1 VU.
+        type: boolean
+        default: true
+
+# Never run two load tests at the same time: their load would add up on the site
+concurrency:
+  group: performance
+  cancel-in-progress: false
+
+jobs:
+  k6:
+    name: k6 ${{ matrix.script }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      # One script at a time, for the same reason as the concurrency group
+      max-parallel: 1
+      matrix:
+        # Nightly: every load and Web Vitals script (the profiles marked "Nightly / manual" in the test case file).
+        # Manual: only the chosen script.
+        script: ${{ fromJSON(github.event_name == 'schedule' && '["PF002-Login-API-load.ts","PF003-Add-to-cart.ts","PF004-View-cart-api-load-with-5-items.ts","PF005-Cart-journey-api-load.ts","PF006-Home-page-web-vitals.ts","PF007-Cart-page-web-vitals.ts"]' || format('["{0}"]', inputs.script)) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          curl -fsSL https://dl.k6.io/key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/k6-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      # Exit code 99 = a threshold failed, 108 = the script aborted; either fails the job
+      - name: Run k6
+        env:
+          SCRIPT: tests/perf/${{ matrix.script }}
+          # Nightly runs always use the full load from the script
+          SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.smoke }}
+        run: |
+          args=(--summary-export=k6-summary.json)
+          # --vus/--iterations would replace the browser scenario, so Web Vitals scripts always run as written
+          if [ "$SMOKE" = "true" ] && [[ "$SCRIPT" != *web-vitals* ]]; then
+            args+=(--vus 1 --iterations 2)
+          fi
+          # The Web Vitals scripts drive Chrome, which the GitHub Ubuntu runner already has
+          if [[ "$SCRIPT" == *web-vitals* ]]; then
+            export K6_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          fi
+          k6 run "${args[@]}" "$SCRIPT"
+
+      - name: Upload summary
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary-${{ matrix.script }}
+          path: k6-summary.json
+          retention-days: 30

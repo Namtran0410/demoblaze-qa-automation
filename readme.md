@@ -107,7 +107,7 @@ Variables are read from `.env` by `playwright.config.ts` and used in code as `pr
 | `TEST_USERNAME` | _(empty)_                   | Not used yet                                   |
 | `TEST_PASSWORD` | _(empty)_                   | Not used yet                                   |
 
-You do not need your own demoblaze account: tests that need one register a fresh account through the API (the `account` fixture in `src/fixtures/business.fixture.ts`).
+You do not need your own demoblaze account: tests that need one register a fresh account through the API (the `account` fixture in `src/fixtures/05.business.fixture.ts`).
 
 ## Running tests
 
@@ -125,7 +125,7 @@ You do not need your own demoblaze account: tests that need one register a fresh
 Run a single file, a single test, or a single browser. Calling `npx playwright test` directly works the same in every shell:
 
 ```bash
-npx playwright test tests/e2e/login/authentication.spec.ts
+npx playwright test tests/e2e/login/02.authentication.spec.ts
 npx playwright test --grep "LG-002"
 npx playwright test --grep "SMK-001" --project=firefox --headed
 ```
@@ -162,12 +162,13 @@ Some tests are marked `test.fail(...)` because demoblaze has a confirmed bug (fo
 test-cases/            Test case suite (Excel: Summary, Login, Cart, Order sheets)
 src/
   infras/
-    pages/             Page objects: locators only (index.ts groups every page)
+    pages/             Page objects: locators only (00.index.ts groups every page)
     helpers/           Reusable UI steps built on the page objects
-    api/               API clients, one per endpoint group (index.ts groups them)
+    api/               API clients, one per endpoint group (00.index.ts groups them)
   business/            Business flows that span several pages or mix UI and API (e.g. account creation)
-  fixtures/            Playwright fixtures (index.ts merges all of them)
+  fixtures/            Playwright fixtures (00.index.ts merges all of them)
   data/                Test data
+  types/               Shared TypeScript types
   utils/               Utility functions
 tests/
   integration/         Integration tests (`*.api.spec.ts` files run in the `api` project, the rest run in the browsers)
@@ -178,16 +179,18 @@ playwright.config.ts   Playwright configuration (also loads `.env`)
 
 ### Naming
 
-- Files and folders are kebab-case: `login-modal.spec.ts`, `account-creator.ts`.
-- A dot only marks what kind of file it is: `.page.ts`, `.helpers.ts`, `.api.ts`, `.fixture.ts`, `.spec.ts`.
+- Files and folders are kebab-case: `01.login-modal.spec.ts`, `01.api-account-creator.ts`.
+- Every `.ts` file starts with a two-digit number: `00.` is always the `index.ts`; the other files follow from `01.`
+  in flow order (base, main, auth, cart, order), and spec files in test case ID order.
+- Apart from the number prefix, a dot only marks what kind of file it is: `.page.ts`, `.helpers.ts`, `.api.ts`, `.fixture.ts`, `.spec.ts`.
   `*.api.spec.ts` is also how Playwright tells API tests from UI tests, so keep that suffix for API tests only.
-- Each folder that groups several modules has an `index.ts`; import it explicitly, e.g. `@infras/pages/index`.
+- Each folder that groups several modules has a `00.index.ts`; import it explicitly, e.g. `@infras/pages/00.index`.
 - Test order comes from the test case ID in the title (`LG-001`, `CT-005`, ...), not from file names.
 
 Tests import `test` and `expect` from the merged fixture instead of `@playwright/test`:
 
 ```ts
-import { test, expect } from "@fixture/index"
+import { test, expect } from "@fixture/00.index"
 ```
 
-Path aliases can be used instead of relative paths: `@infras/*`, `@business/*`, `@fixture/*`, `@data/*`, `@utils/*` (declared in `tsconfig.json`).
+Path aliases can be used instead of relative paths: `@infras/*`, `@business/*`, `@fixture/*`, `@data/*`, `@utils/*`, `@type/*` (declared in `tsconfig.json`).

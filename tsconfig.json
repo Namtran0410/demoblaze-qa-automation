@@ -14,7 +14,8 @@
       "@business/*": ["./src/business/*"],
       "@fixture/*": ["./src/fixtures/*"],
       "@data/*": ["./src/data/*"],
-      "@utils/*": ["./src/utils/*"]
+      "@utils/*": ["./src/utils/*"],
+      "@type/*": ["./src/types/*"]
     }
   },
   "include": ["playwright.config.ts", "src/**/*.ts", "tests/**/*.ts"]

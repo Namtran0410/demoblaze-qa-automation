@@ -150,20 +150,30 @@ Variables are read from `.env` by `playwright.config.ts` and used in code as `pr
 | `TEST_USERNAME` | _(empty)_                   | Not used yet                                   |
 | `TEST_PASSWORD` | _(empty)_                   | Not used yet                                   |
 
-You do not need your own demoblaze account: tests that need one register a fresh account through the API (the `account` fixture in `src/fixtures/05.business.fixture.ts`).
+You do not need your own demoblaze account: tests that need one register a fresh account through the API (fixtures in `src/fixtures/05.business.fixture.ts`):
+
+| Fixture                           | Use it in                   | Needs a browser                                             |
+| --------------------------------- | --------------------------- | ----------------------------------------------------------- |
+| `account`, `accountCreator`       | UI tests (`tests/e2e`)      | Yes: it also supports `test.use({ accountCreation: "ui" })` |
+| `apiAccount`, `apiAccountCreator` | API tests (`*.api.spec.ts`) | No                                                          |
+
+Use `apiAccount` / `apiAccountCreator` in API tests. `account` asks for a browser page even when it registers through the API, so an API test using it passes locally but fails in CI, where the `api` job has no browser installed.
 
 ## Running tests
 
-| Command                 | What it does                                                                              |
-| ----------------------- | ----------------------------------------------------------------------------------------- |
-| `npm test`              | Runs every project                                                                        |
-| `npm run test:api`      | Runs only API tests (`*.api.spec.ts` files)                                               |
-| `npm run test:e2e`      | Runs UI tests on all 3 browsers (every file in `tests` except `*.api.spec.ts` and `perf`) |
-| `npm run test:chromium` | Runs UI tests on Chromium only                                                            |
-| `npm run test:headed`   | Runs on Chromium with a visible browser window                                            |
-| `npm run test:ui`       | Opens Playwright UI mode to run and debug tests                                           |
-| `npm run report`        | Opens the HTML report of the last run                                                     |
-| `npm run typecheck`     | Checks for TypeScript errors                                                              |
+| Command                  | What it does                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
+| `npm test`               | Runs every project                                                                        |
+| `npm run test:api`       | Runs only API tests (`*.api.spec.ts` files)                                               |
+| `npm run test:e2e`       | Runs UI tests on all 3 browsers (every file in `tests` except `*.api.spec.ts` and `perf`) |
+| `npm run test:chromium`  | Runs UI tests on Chromium only                                                            |
+| `npm run test:headed`    | Runs on Chromium with a visible browser window                                            |
+| `npm run test:ui`        | Opens Playwright UI mode to run and debug tests                                           |
+| `npm run report`         | Opens the HTML report of the last run                                                     |
+| `npm run typecheck`      | Checks for TypeScript errors                                                              |
+| `npm run typecheck:perf` | Checks the k6 scripts in `tests/perf` for TypeScript errors                               |
+| `npm run format`         | Formats every file with Prettier                                                          |
+| `npm run format:check`   | Reports files that are not formatted, without changing them (what CI runs)                |
 
 Run a single file, a single test, or a single browser. Calling `npx playwright test` directly works the same in every shell:
 
@@ -223,10 +233,69 @@ import { Options } from "k6/options"
 export const options: Options = { ... }
 ```
 
+## CI/CD (GitHub Actions)
+
+Two workflows in `.github/workflows/`. GitHub picks them up on push; nothing has to be configured on the GitHub side.
+
+### `tests.yml`: every push to `main` and every pull request
+
+| Job                                            | What it runs                                                                                        | Runs after     |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------- |
+| Typecheck, format, k6 scripts                  | `npm run typecheck`, `npm run typecheck:perf`, `npm run format:check`, `k6 inspect` on every script | —              |
+| k6 smoke (PF001)                               | `k6 run tests/perf/PF001-Login-smoke-base-line.ts` (1 VU, 1 min)                                    | the checks job |
+| Playwright (api / chromium / firefox / webkit) | `npx playwright test --project=<name>`, the 4 projects in parallel                                  | the checks job |
+
+A newer push to the same branch cancels the run still going for the older one.
+
+### `perf.yml`: load and Web Vitals tests
+
+- **Nightly** at 19:00 UTC (02:00 in Vietnam): PF002 to PF007, one script after another, with the full load written in each script.
+- **On demand**: **Actions → Performance → Run workflow**, pick a script. `smoke` (on by default) runs it with 1 VU and 2 iterations instead of the full load; the Web Vitals scripts (PF006, PF007) always run as written, they are already 1 VU.
+- Two load tests never run at the same time, so their load does not add up on the public site.
+- The Web Vitals scripts use the Google Chrome that the GitHub Ubuntu runner already has.
+
+GitHub turns the nightly schedule off after 60 days without activity in the repository; re-enable it on the workflow page.
+
+### How CI differs from a local run
+
+GitHub sets `CI=true`, and `playwright.config.ts` then uses **2 workers**, **retries a failed test twice** and fails the run if a `test.only` was left in the code. There is no `.env` in CI (it is not committed): `BASE_URL` and `API_URL` fall back to their defaults, so no secret or variable is needed. If a test ever needs one, add it under **Settings → Secrets and variables → Actions** and pass it in the workflow, e.g. `env: TEST_USERNAME: ${{ secrets.TEST_USERNAME }}`.
+
+### When a job fails
+
+- Open the run on the **Actions** tab, then the failed job. The summary at the top of the run lists the error annotations.
+- Playwright jobs upload `playwright-report-<project>` (14 days); k6 jobs upload `k6-summary-<script>` (JSON). Download the report, unzip it and open it with `npx playwright show-report <folder>`: every test has its trace, screenshot and video.
+- To reproduce a CI failure locally, run the same project with the same settings: `CI=true npx playwright test --project=<name>`.
+
+### Before pushing
+
+Run what the checks job runs, so CI does not fail on something quick to fix:
+
+```bash
+npm run format          # then commit the formatting changes
+npm run typecheck
+npm run typecheck:perf
+```
+
+### Skipping CI for a push
+
+Put `[skip ci]` in the commit message, e.g. for a change that only touches the readme:
+
+```bash
+git commit -m "docs: update readme [skip ci]"
+```
+
+GitHub also accepts `[ci skip]`, `[no ci]`, `[skip actions]` and `[actions skip]`, in the title or the body of the message.
+
+- Only the **last commit** of a push is checked: pushing 3 commits skips CI only when the newest one has the tag.
+- It skips `push` and `pull_request` runs only. The nightly performance run and **Run workflow** still run.
+- On a pull request, a skipped CI never reports a result: if `main` requires CI to pass before merging, that pull request cannot be merged until a commit without the tag is pushed.
+- `git push -o ci.skip` is GitLab syntax and does nothing on GitHub.
+
 ## Project structure
 
 ```
-test-cases/            Test case suite (Excel: Summary, Login, Cart, Order sheets)
+.github/workflows/     CI/CD: tests.yml (every push / PR), perf.yml (nightly / manual)
+test-cases/            Test case suites (Excel): Login_Cart (Summary, Login, Cart, Order) and Performance
 src/
   infras/
     pages/             Page objects: locators only (00.index.ts groups every page)

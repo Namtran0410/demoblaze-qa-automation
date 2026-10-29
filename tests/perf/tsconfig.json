@@ -1,0 +1,13 @@
+{
+  // k6 scripts run in the k6 runtime, not Node: use k6 types only
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["k6"]
+  },
+  "include": ["**/*.ts"]
+}

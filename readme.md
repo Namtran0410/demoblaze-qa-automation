@@ -87,6 +87,34 @@ npx playwright test --grep "SMK-001"
 
 The second command runs the smoke test on every browser. It should report all passed.
 
+### 5. Install k6 (performance tests only)
+
+Performance tests in `tests/perf` run with [k6](https://grafana.com/docs/k6/latest/), not Playwright. k6 is a standalone program, so `npm ci` does not install it. Skip this step if you only run the Playwright tests.
+
+**Windows**: `winget install k6 --source winget`
+
+**macOS**: `brew install k6`
+
+**Linux** (Ubuntu / Debian):
+
+```bash
+sudo gpg -k
+sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+sudo apt-get update
+sudo apt-get install k6
+```
+
+Without `sudo`, download `k6-<version>-linux-amd64.tar.gz` from the [k6 releases](https://github.com/grafana/k6/releases) page and copy the `k6` file from it into a folder on your `PATH`, e.g. `~/.local/bin`.
+
+Check it (any OS), the project uses k6 v2.3:
+
+```bash
+k6 version
+```
+
+k6 runs TypeScript scripts directly. `tests/perf` has its own `tsconfig.json` with the k6 types (`@types/k6`, installed by `npm ci`), because k6 scripts do not run on Node. Check them with `npx tsc -p tests/perf`; `npm run typecheck` does not cover this folder.
+
 ### Windows: `running scripts is disabled on this system`
 
 PowerShell blocks the `npm` / `npx` script shims by default. Either run the commands in **cmd** instead, or allow local scripts once for your user:
@@ -155,6 +183,16 @@ npx playwright show-trace <path to trace.zip>
 ### Known defects
 
 Some tests are marked `test.fail(...)` because demoblaze has a confirmed bug (for example LG-016, LG-021). They show as passed while the bug is still there. When the site is fixed, Playwright reports them as "expected to fail but passed": remove the `test.fail` line then.
+
+### Performance tests
+
+Run a k6 script from `tests/perf` (needs k6, see step 5 of Installation):
+
+```bash
+k6 run tests/perf/<script>.ts
+```
+
+k6 does not read `.env`. Pass variables with `-e`, e.g. `k6 run -e API_URL=https://api.demoblaze.com tests/perf/<script>.ts`, and read them in the script as `__ENV.API_URL`. Keep the load small: demoblaze is a public demo site.
 
 ## Project structure
 

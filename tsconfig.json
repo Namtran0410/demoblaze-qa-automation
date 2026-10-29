@@ -18,5 +18,6 @@
       "@type/*": ["./src/types/*"]
     }
   },
-  "include": ["playwright.config.ts", "src/**/*.ts", "tests/**/*.ts"]
+  "include": ["playwright.config.ts", "src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["tests/perf"]
 }

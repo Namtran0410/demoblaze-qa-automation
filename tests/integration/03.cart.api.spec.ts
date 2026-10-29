@@ -15,14 +15,14 @@ test.describe("Login | Login modal", () => {
     })
     //TODO: PASSED
     test("CT-013 | API | Users cannot see each other's carts", async ({
-        accountCreator,
+        apiAccountCreator,
         authApi,
         cartApi,
         userDataFixture,
     }) => {
         // Two registered users, each with their own auth token (a token makes the cart calls use flag true)
-        const userA = await accountCreator.create(userDataFixture.generateAccount())
-        const userB = await accountCreator.create(userDataFixture.generateAccount())
+        const userA = await apiAccountCreator.create(userDataFixture.generateAccount())
+        const userB = await apiAccountCreator.create(userDataFixture.generateAccount())
         const tokenA = await authApi.loginSuccess(userA)
         const tokenB = await authApi.loginSuccess(userB)
 

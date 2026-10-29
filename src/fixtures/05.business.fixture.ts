@@ -11,6 +11,9 @@ type BusinessFixtures = {
     accountCreator: AccountCreator
     // A freshly registered account for the test
     account: Account
+    // Same, but through the API only: no browser page, so the api project does not need a browser installed
+    apiAccountCreator: AccountCreator
+    apiAccount: Account
     orderBusiness: InstanceType<typeof IndexBusiness.orderBusiness>
 }
 
@@ -25,6 +28,13 @@ export const test = base.extend<BusinessFixtures>({
     },
     account: async ({ accountCreator }, use) => {
         await use(await accountCreator.create(new UserGeneration().generateAccount()))
+    },
+    // accountCreator always asks for a page (the UI strategy needs one), which launches a browser even for the API strategy
+    apiAccountCreator: async ({ request }, use) => {
+        await use(new IndexBusiness.apiAccountCreator(request))
+    },
+    apiAccount: async ({ apiAccountCreator }, use) => {
+        await use(await apiAccountCreator.create(new UserGeneration().generateAccount()))
     },
     orderBusiness: async ({ page }, use) => {
         await use(new IndexBusiness.orderBusiness(new OrderHelpers(page)))

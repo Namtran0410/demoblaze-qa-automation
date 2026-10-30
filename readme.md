@@ -8,6 +8,7 @@ Runs on Windows, Linux and macOS.
 - [Node.js](https://nodejs.org/) 20 or later (the project is developed on Node 24)
 - npm (installed with Node.js)
 - Git
+- **Linux: Ubuntu 24.04 or later for the WebKit tests.** On Ubuntu 22.04, WebKit crashes when the test opens a product page (`Target crashed`); Chromium and Firefox work. CI runs on Ubuntu 24.04.
 
 ### Install the requirements
 
@@ -66,7 +67,13 @@ npx playwright install
 npx playwright install --with-deps
 ```
 
-`--with-deps` asks for your password and installs both the browsers and the libraries. If the browsers are already downloaded, `sudo npx playwright install-deps` installs only the libraries. Playwright supports Ubuntu and Debian; on other distributions install the libraries it lists with your package manager.
+`--with-deps` asks for your password and installs both the browsers and the libraries. If the browsers are already downloaded, this installs only the libraries:
+
+```bash
+sudo env "PATH=$PATH" npx playwright install-deps
+```
+
+Keep the `env "PATH=$PATH"` part if you installed Node with nvm: plain `sudo npx` runs the system Node (often an old v12 from apt) instead of yours and fails with `SyntaxError: Unexpected token '?'`. Playwright supports Ubuntu and Debian; on other distributions install the libraries it lists with your package manager.
 
 ### 3. Create the environment file
 
@@ -142,13 +149,11 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 Variables are read from `.env` by `playwright.config.ts` and used in code as `process.env.<NAME>`. If `BASE_URL` or `API_URL` is not set, it falls back to its default.
 
-| Variable        | Default                     | Used for                                       |
-| --------------- | --------------------------- | ---------------------------------------------- |
-| `BASE_URL`      | `https://www.demoblaze.com` | UI tests (projects chromium/firefox/webkit)    |
-| `API_URL`       | `https://api.demoblaze.com` | API tests (project `api`)                      |
-| `CI`            | _(not set)_                 | Retries failed tests twice, blocks `test.only` |
-| `TEST_USERNAME` | _(empty)_                   | Not used yet                                   |
-| `TEST_PASSWORD` | _(empty)_                   | Not used yet                                   |
+| Variable   | Default                     | Used for                                       |
+| ---------- | --------------------------- | ---------------------------------------------- |
+| `BASE_URL` | `https://www.demoblaze.com` | UI tests (projects chromium/firefox/webkit)    |
+| `API_URL`  | `https://api.demoblaze.com` | API tests (project `api`)                      |
+| `CI`       | _(not set)_                 | Retries failed tests twice, blocks `test.only` |
 
 You do not need your own demoblaze account: tests that need one register a fresh account through the API (fixtures in `src/fixtures/05.business.fixture.ts`):
 
@@ -258,7 +263,7 @@ GitHub turns the nightly schedule off after 60 days without activity in the repo
 
 ### How CI differs from a local run
 
-GitHub sets `CI=true`, and `playwright.config.ts` then uses **2 workers**, **retries a failed test twice** and fails the run if a `test.only` was left in the code. There is no `.env` in CI (it is not committed): `BASE_URL` and `API_URL` fall back to their defaults, so no secret or variable is needed. If a test ever needs one, add it under **Settings → Secrets and variables → Actions** and pass it in the workflow, e.g. `env: TEST_USERNAME: ${{ secrets.TEST_USERNAME }}`.
+GitHub sets `CI=true`, and `playwright.config.ts` then uses **2 workers**, **retries a failed test twice** and fails the run if a `test.only` was left in the code. There is no `.env` in CI (it is not committed): `BASE_URL` and `API_URL` fall back to their defaults, so no secret or variable is needed. If a test ever needs one, add it under **Settings → Secrets and variables → Actions** and pass it in the workflow, e.g. `env: MY_SECRET: ${{ secrets.MY_SECRET }}`.
 
 ### When a job fails
 
